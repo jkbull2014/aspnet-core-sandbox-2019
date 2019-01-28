@@ -18,12 +18,33 @@ namespace Spice
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IHostingEnvironment env)
         {
             Configuration = configuration;
+
+            if (env.IsDevelopment())
+            {
+                string developmentMachineName = Configuration.GetValue<string>("DevelopmentMachineName");
+
+                switch (developmentMachineName.ToLower())
+                {
+                    case "racetrack":
+                        _connnectionStringName = "RaceTrackConnection";
+                        break;
+                    default:
+                        _connnectionStringName = "DefaultConnection";
+                        break;
+                }
+            }
+            else
+            {
+                _connnectionStringName = "DefaultConnection";
+            }
         }
 
         public IConfiguration Configuration { get; }
+
+        private string _connnectionStringName;
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -35,9 +56,13 @@ namespace Spice
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
 
+            // string connnectionStringName = string.Empty;
+
+            
+
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
-                    Configuration.GetConnectionString("DefaultConnection")));
+                    Configuration.GetConnectionString(_connnectionStringName)));
             services.AddDefaultIdentity<IdentityUser>()
                 .AddDefaultUI(UIFramework.Bootstrap4)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
